@@ -1,0 +1,13 @@
+{
+  "name": "deepgram-demo",
+  "dependencies": {
+    "@deepgram/sdk": "^3.2.0",
+    "cross-fetch": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "node-record-lpcm16": "^1.0.1",
+    "ws": "^8.16.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
