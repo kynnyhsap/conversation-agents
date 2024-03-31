@@ -10,7 +10,7 @@ const model = "eleven_multilingual_v2";
 
 const outputFormat = "pcm_16000";
 
-const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}&output_format=${outputFormat}`;
+const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}&output_format=${outputFormat}&optimize_streaming_latency=4`;
 
 module.exports.tts = function ttsWs(handle) {
   let isOpen = false;
