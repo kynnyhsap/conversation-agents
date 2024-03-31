@@ -12,55 +12,59 @@ const outputFormat = "pcm_16000";
 
 const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}&output_format=${outputFormat}`;
 
-const socket = new WebSocket(endpoint);
+module.exports.tts = function ttsWs(handle) {
+  let isOpen = false;
 
-socket.on("error", console.error);
-socket.on("close", console.info);
+  const socket = new WebSocket(endpoint);
 
-function send(data) {
-  console.log("[ELVENLABS] send", JSON.stringify(data));
-  socket.send(JSON.stringify(data));
-}
+  socket.on("error", console.error);
+  socket.on("close", console.info);
 
-function start() {
-  send({ text: " ", xi_api_key: process.env.ELEVEN_LABS_API_KEY });
-}
+  function send(data) {
+    console.log("[ELVENLABS] send", JSON.stringify(data));
+    socket.send(JSON.stringify(data));
+  }
 
-function end() {
-  send({ text: "" });
-}
+  function start() {
+    send({ text: " ", xi_api_key: process.env.ELEVEN_LABS_API_KEY });
+  }
 
-function sendText(text) {
-  send({
-    text: text + " ",
-    try_trigger_generation: true,
+  function end() {
+    send({ text: "" });
+  }
+
+  function sendText(text) {
+    send({
+      text: text + " ",
+      try_trigger_generation: true,
+    });
+  }
+
+  socket.on("open", async (event) => {
+    console.log("[ELVENLABS] ws open");
+    start();
+
+    isOpen = true;
+
+    // await wait(2000);
+    // sendText("Hello, world!");
+    // await wait(2000);
+    // end();
   });
-}
 
-socket.on("open", async (event) => {
-  console.log("[ELVENLABS] open");
-  start();
+  socket.on("message", async (event) => {
+    const response = JSON.parse(Buffer.from(event).toString());
+    // console.log("[ELVENLABS] response", response);
 
-  await wait(2000);
-  sendText("Hello, world!");
-  await wait(2000);
+    handle(response);
+  });
 
-  end();
-});
-
-socket.on("message", async (event) => {
-  const response = JSON.parse(Buffer.from(event).toString());
-
-  console.log("[ELVENLABS] response", response);
-
-  //   if (response.isFinal) {
-  //     // the generation is complete
-  //   }
-
-  //   if (response.normalizedAlignment) {
-  //     // use the alignment info if needed
-  //   }
-});
+  return {
+    isConnectionOpen: () => isOpen,
+    sendText,
+    end,
+  };
+};
 
 // async function live(text, handleResponse) {
 //   while (socket.readyState !== WebSocket.OPEN) {

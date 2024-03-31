@@ -6,32 +6,29 @@ const expressWs = require("express-ws")(app);
 const dotenv = require("dotenv");
 dotenv.config();
 
-const OpenAI = require("openai");
-
 const { createClient, LiveTranscriptionEvents } = require("@deepgram/sdk");
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-async function chat(prompt) {
-  if (!prompt) return "";
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4-turbo-preview",
-    messages: [
-      // { role: "system", content: systemPrompt },
-      { role: "user", content: prompt },
-    ],
-  });
-
-  return response.choices[0].message.content ?? "";
-}
+const { tts } = require("./experiments/tts");
 
 app.ws("/", function (ws, req) {
   console.log("[WSS] Client connected to server.");
   ws.on("error", console.error);
   ws.on("close", console.info);
+
+  const {
+    isConnectionOpen,
+    sendText,
+    end: endTss,
+  } = tts((data) => {
+    if (data && data.audio) {
+      const buf = Buffer.from(data.audio, "base64");
+      console.log(
+        "[WSS] Sending audio patch:",
+        data.audio.slice(0, 10) + "..."
+      );
+      ws.send("----", buf);
+    }
+  });
 
   const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 
@@ -54,14 +51,19 @@ app.ws("/", function (ws, req) {
     deepgramConnection.on(LiveTranscriptionEvents.Transcript, (data) => {
       const transcript = data.channel.alternatives[0].transcript;
 
-      if (transcript) {
-        chat(transcript).then((resp) => {
-          console.log("[OPENAI] Chat response:", resp);
-        });
+      // if (transcript) {
+      //   chat(transcript).then((resp) => {
+      //     console.log("[OPENAI] Chat response:", resp);
+      //   });
+      // }
+
+      if (transcript && isConnectionOpen) {
+        sendText(transcript);
+        endTss();
       }
 
       console.log("[DEEPGRAM] Transcript:", transcript);
-      ws.send(transcript);
+      // ws.send(transcript);
     });
 
     deepgramConnection.on(LiveTranscriptionEvents.Metadata, (data) => {
