@@ -19,9 +19,9 @@ app.ws("/", function (ws, req) {
     model: "nova-2",
     language: "en-US",
     smart_format: true,
-    channels: 1,
+    channels: 2,
     encoding: "linear16",
-    sample_rate: 16_000,
+    sample_rate: 44_100,
   });
 
   deepgramConnection.on(LiveTranscriptionEvents.Open, () => {

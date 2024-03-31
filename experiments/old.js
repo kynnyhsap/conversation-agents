@@ -12,9 +12,9 @@ const live = async () => {
     model: "nova-2",
     language: "en-US",
     smart_format: true,
-    channels: 2,
+    channels: 1,
+    sample_rate: 16_000,
     encoding: "linear16", // 16-bit, little endian, signed PCM WAV data
-    sample_rate: 44_100,
   });
 
   connection.on(LiveTranscriptionEvents.Open, () => {
