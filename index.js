@@ -37,7 +37,7 @@ app.ws("/", function (ws, req) {
 
   const deepgramConnection = deepgram.listen.live({
     model: "nova-2",
-    language: "en-US",
+    language: "uk",
     smart_format: true,
     channels: 2,
     sample_rate: 44_100,
