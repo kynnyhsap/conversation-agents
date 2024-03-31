@@ -54,6 +54,6 @@ wss.on("connection", function connection(ws) {
   });
 });
 
-server.listen(8081, () => {
-  console.log("Server is listening on port 8081");
+server.listen(8080, () => {
+  console.log("Server is listening on port 8080");
 });
