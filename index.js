@@ -6,7 +6,27 @@ const expressWs = require("express-ws")(app);
 const dotenv = require("dotenv");
 dotenv.config();
 
+const OpenAI = require("openai");
+
 const { createClient, LiveTranscriptionEvents } = require("@deepgram/sdk");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+async function chat(prompt) {
+  if (!prompt) return "";
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4-turbo-preview",
+    messages: [
+      // { role: "system", content: systemPrompt },
+      { role: "user", content: prompt },
+    ],
+  });
+
+  return response.choices[0].message.content ?? "";
+}
 
 app.ws("/", function (ws, req) {
   console.log("[WSS] Client connected to server.");
@@ -33,6 +53,12 @@ app.ws("/", function (ws, req) {
 
     deepgramConnection.on(LiveTranscriptionEvents.Transcript, (data) => {
       const transcript = data.channel.alternatives[0].transcript;
+
+      if (transcript) {
+        chat(transcript).then((resp) => {
+          console.log("[OPENAI] Chat response:", resp);
+        });
+      }
 
       console.log("[DEEPGRAM] Transcript:", transcript);
       ws.send(transcript);

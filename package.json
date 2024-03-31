@@ -10,6 +10,7 @@
     "express": "^4.19.2",
     "express-ws": "^5.0.2",
     "node-record-lpcm16": "^1.0.1",
+    "openai": "^4.31.0",
     "ws": "^8.16.0"
   },
   "peerDependencies": {
