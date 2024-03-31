@@ -12,8 +12,14 @@ const { tts } = require("./experiments/tts");
 
 app.ws("/", function (ws, req) {
   console.log("[WSS] Client connected to server.");
-  ws.on("error", console.error);
-  ws.on("close", console.info);
+  ws.on("close", () => {
+    console.log("[WSS] Client disconnected.");
+    endTss();
+  });
+  ws.on("error", (err) => {
+    console.error("[WSS] Client error:", err);
+    endTss();
+  });
 
   const {
     isConnectionOpen,
@@ -26,7 +32,7 @@ app.ws("/", function (ws, req) {
         "[WSS] Sending audio patch:",
         data.audio.slice(0, 10) + "..."
       );
-      ws.send("----", buf);
+      ws.send(buf);
     }
   });
 
@@ -37,8 +43,8 @@ app.ws("/", function (ws, req) {
     language: "en-US",
     smart_format: true,
     channels: 2,
-    encoding: "linear16",
     sample_rate: 44_100,
+    encoding: "linear16",
   });
 
   deepgramConnection.on(LiveTranscriptionEvents.Open, () => {
@@ -59,7 +65,6 @@ app.ws("/", function (ws, req) {
 
       if (transcript && isConnectionOpen) {
         sendText(transcript);
-        endTss();
       }
 
       console.log("[DEEPGRAM] Transcript:", transcript);
@@ -72,6 +77,7 @@ app.ws("/", function (ws, req) {
 
     deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
       console.error("[DEEPGRAM] Error:", err);
+      endTss();
     });
 
     ws.on("message", function (data) {
