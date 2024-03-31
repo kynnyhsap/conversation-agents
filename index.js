@@ -11,7 +11,7 @@ const { createClient, LiveTranscriptionEvents } = require("@deepgram/sdk");
 const { tts } = require("./experiments/tts");
 
 app.ws("/", function (ws, req) {
-  console.log("[WSS] Client connected to server.");
+  console.log("[WSS] Client connected to server");
   ws.on("close", () => {
     console.log("[WSS] Client disconnected.");
     endTss();
