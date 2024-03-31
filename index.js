@@ -28,10 +28,7 @@ app.ws("/", function (ws, req) {
   } = tts((data) => {
     if (data && data.audio) {
       const buf = Buffer.from(data.audio, "base64");
-      console.log(
-        "[WSS] Sending audio patch:",
-        data.audio.slice(0, 10) + "..."
-      );
+      console.log("🎧 Sending audio patch:", data.audio.slice(0, 10) + "...");
       ws.send(buf);
     }
   });
