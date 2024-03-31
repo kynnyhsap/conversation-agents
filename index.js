@@ -1,16 +1,14 @@
-// const { createServer } = require("http");
-const { createServer } = require("https");
+const express = require("express");
+const app = express();
+const port = Number(process.env.PORT ?? 3000);
+const expressWs = require("express-ws")(app);
 
 const dotenv = require("dotenv");
 dotenv.config();
 
 const { createClient, LiveTranscriptionEvents } = require("@deepgram/sdk");
 
-const { WebSocketServer } = require("ws");
-const server = createServer();
-const wss = new WebSocketServer({ server });
-
-wss.on("connection", function connection(ws) {
+app.ws("/", function (ws, req) {
   console.log("[WSS] Client connected to server.");
   ws.on("error", console.error);
   ws.on("close", console.info);
@@ -54,6 +52,4 @@ wss.on("connection", function connection(ws) {
   });
 });
 
-server.listen(8080, () => {
-  console.log("Server is listening on port 8080");
-});
+app.listen(port);
