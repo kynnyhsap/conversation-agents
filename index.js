@@ -1,51 +1,58 @@
+const { createServer } = require("http");
+
 const dotenv = require("dotenv");
 dotenv.config();
 
-const recorder = require("node-record-lpcm16");
-
 const { createClient, LiveTranscriptionEvents } = require("@deepgram/sdk");
 
-const live = async () => {
+const { WebSocketServer } = require("ws");
+const server = createServer();
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", function connection(ws) {
+  console.log("[WSS] Client connected to server.");
+  ws.on("error", console.error);
+  ws.on("close", console.info);
+
   const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 
-  const connection = deepgram.listen.live({
+  const deepgramConnection = deepgram.listen.live({
     model: "nova-2",
     language: "en-US",
     smart_format: true,
+    channels: 1,
+    encoding: "linear16",
+    sample_rate: 16_000,
   });
 
-  connection.on(LiveTranscriptionEvents.Open, () => {
-    console.log("Connection opened.");
+  deepgramConnection.on(LiveTranscriptionEvents.Open, () => {
+    console.log("[DEEPGRAM] Connection opened.");
 
-    connection.on(LiveTranscriptionEvents.Close, () => {
-      console.log("Connection closed.");
+    deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
+      console.log(" [DEEPGRAM]Connection closed.");
     });
 
-    connection.on(LiveTranscriptionEvents.Transcript, (data) => {
-      console.log(data.channel.alternatives[0].transcript);
+    deepgramConnection.on(LiveTranscriptionEvents.Transcript, (data) => {
+      const transcript = data.channel.alternatives[0].transcript;
+
+      console.log("[DEEPGRAM] Transcript:", transcript);
+      ws.send(transcript);
     });
 
-    connection.on(LiveTranscriptionEvents.Metadata, (data) => {
-      console.log(data);
+    deepgramConnection.on(LiveTranscriptionEvents.Metadata, (data) => {
+      console.log("[DEEPGRAM] Metadata:", data);
     });
 
-    connection.on(LiveTranscriptionEvents.Error, (err) => {
-      console.error(err);
+    deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
+      console.error("[DEEPGRAM] Error:", err);
     });
 
-    const recording = recorder.record({
-      channels: 1,
-      sampleRate: 16_000,
-      audioType: "wav", // Linear PCM
-    });
-
-    const recordingStream = recording.stream();
-
-    recordingStream.on("readable", () => {
-      const data = recordingStream.read();
-      connection.send(data);
+    ws.on("message", function (data) {
+      deepgramConnection.send(data);
     });
   });
-};
+});
 
-live();
+server.listen(8081, () => {
+  console.log("Server is listening on port 8081");
+});
