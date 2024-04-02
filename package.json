@@ -1,5 +1,6 @@
 {
-  "name": "deepgram-demo",
+  "name": "conversation-api",
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },

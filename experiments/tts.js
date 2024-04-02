@@ -1,9 +1,6 @@
-const dotenv = require("dotenv");
-dotenv.config();
+import { WebSocket } from "ws";
 
-const { WebSocket } = require("ws");
-
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+// const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const voiceId = "pNInz6obpgDQGcFmaJgB";
 const model = "eleven_multilingual_v2";
@@ -12,7 +9,7 @@ const outputFormat = "pcm_16000";
 
 const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}&output_format=${outputFormat}&optimize_streaming_latency=4`;
 
-module.exports.tts = function ttsWs(handle) {
+export function tts(handle) {
   let isOpen = false;
 
   const socket = new WebSocket(endpoint);
@@ -64,17 +61,4 @@ module.exports.tts = function ttsWs(handle) {
     sendText,
     end,
   };
-};
-
-// async function live(text, handleResponse) {
-//   while (socket.readyState !== WebSocket.OPEN) {
-//     console.log("Waiting for connection to open...");
-//     await wait(100);
-//   }
-
-//   //   while (socket.readyState !== WebSocket.CLOSED) {
-//   //     await wait(100);
-//   //   }
-// }
-
-// live();
+}

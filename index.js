@@ -1,14 +1,16 @@
-const express = require("express");
-const app = express();
-const port = Number(process.env.PORT ?? 3000);
-const expressWs = require("express-ws")(app);
-
-const dotenv = require("dotenv");
+import dotenv from "dotenv";
 dotenv.config();
 
-const { createClient, LiveTranscriptionEvents } = require("@deepgram/sdk");
+import express from "express";
+import expressWs from "express-ws";
+import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 
-const { tts } = require("./experiments/tts");
+import { tts } from "./experiments/tts.js";
+
+const app = express();
+const port = Number(process.env.PORT ?? 3000);
+
+expressWs(app);
 
 app.ws("/", function (ws, req) {
   console.log("[WSS] Client connected to server");
