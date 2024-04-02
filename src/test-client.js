@@ -1,6 +1,6 @@
-const recorder = require("node-record-lpcm16");
+import recorder from "node-record-lpcm16";
 
-const { WebSocket } = require("ws");
+import { WebSocket } from "ws";
 
 // const URL = "wss://deepgram-ws-production.up.railway.app";
 const URL = "ws://localhost:3000";
@@ -17,7 +17,7 @@ ws.on("open", function open() {
   const recording = recorder.record({
     channels: 1,
     sampleRate: 16_000,
-    // audioType: "wav", // Linear PCM
+    audioType: "wav", // Linear PCM
   });
 
   const recordingStream = recording.stream();

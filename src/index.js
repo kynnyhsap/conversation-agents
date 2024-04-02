@@ -5,7 +5,7 @@ import express from "express";
 import expressWs from "express-ws";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 
-import { tts } from "./experiments/tts.js";
+import { tts } from "./tts.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -39,10 +39,10 @@ app.ws("/", function (ws, req) {
 
   const deepgramConnection = deepgram.listen.live({
     model: "nova-2",
-    language: "uk",
+    language: "en-US",
     smart_format: true,
-    channels: 2,
-    sample_rate: 44_100,
+    channels: 1,
+    sample_rate: 16_000,
     encoding: "linear16",
   });
 
