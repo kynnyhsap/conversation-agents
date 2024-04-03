@@ -8,7 +8,7 @@ const voiceId = "pNInz6obpgDQGcFmaJgB";
 const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?${qs.stringify(
   {
     model_id: "eleven_multilingual_v2",
-    // output_format: "pcm_16000",
+    output_format: "pcm_16000",
     optimize_streaming_latency: 3,
   }
 )}`;
