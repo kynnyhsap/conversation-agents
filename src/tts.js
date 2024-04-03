@@ -1,13 +1,17 @@
 import { WebSocket } from "ws";
+import qs from "query-string";
 
 // const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const voiceId = "pNInz6obpgDQGcFmaJgB";
-const model = "eleven_multilingual_v2";
 
-const outputFormat = "pcm_16000";
-
-const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}&output_format=${outputFormat}&optimize_streaming_latency=4`;
+const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?${qs.stringify(
+  {
+    model_id: "eleven_multilingual_v2",
+    // output_format: "pcm_16000",
+    optimize_streaming_latency: 3,
+  }
+)}`;
 
 export function tts(handle) {
   let isOpen = false;
@@ -33,7 +37,8 @@ export function tts(handle) {
   function sendText(text) {
     send({
       text: text + " ",
-      try_trigger_generation: true,
+      flush: true,
+      // try_trigger_generation: true,
     });
   }
 

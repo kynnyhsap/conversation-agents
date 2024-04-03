@@ -41,8 +41,8 @@ app.ws("/", function (ws, req) {
     model: "nova-2",
     language: "en-US",
     smart_format: true,
-    channels: 1,
-    sample_rate: 16_000,
+    channels: 2,
+    sample_rate: 44_100,
     encoding: "linear16",
   });
 

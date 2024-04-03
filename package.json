@@ -13,9 +13,13 @@
     "express-ws": "^5.0.2",
     "node-record-lpcm16": "^1.0.1",
     "openai": "^4.31.0",
+    "query-string": "^9.0.0",
     "ws": "^8.16.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.0.12"
   }
 }
