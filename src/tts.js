@@ -9,7 +9,7 @@ const endpoint = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-in
   {
     model_id: "eleven_multilingual_v2",
     output_format: "pcm_16000",
-    optimize_streaming_latency: 3,
+    optimize_streaming_latency: 4,
   }
 )}`;
 
