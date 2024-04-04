@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { createBunWebSocket } from "hono/bun";
-import { createDeepgramConnection } from "./src/deepgram";
+import { createDeepgramConnection } from "./deepgram";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket();
 

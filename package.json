@@ -2,8 +2,8 @@
   "name": "conversation-api",
   "type": "module",
   "scripts": {
-    "start": "node ./src/index.js",
-    "test:client": "node ./src/test-client.js"
+    "start": "bun run ./src/index.ts",
+    "sim": "bun run ./src/simulate.ts"
   },
   "dependencies": {
     "@deepgram/sdk": "^3.2.0",

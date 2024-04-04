@@ -15,7 +15,7 @@ const recordingStream = ffmpeg.stdout;
 const ws = new WebSocket(URL);
 
 ws.addEventListener("open", async (event) => {
-  console.log("[WS] Connected to websocket. Sending live audio...");
+  console.log("[Simulated WS] Connected to websocket. Sending live audio...");
 
   // @ts-ignore
   for await (const chunk of recordingStream) {
