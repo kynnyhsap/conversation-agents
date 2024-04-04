@@ -28,14 +28,19 @@ export function createDeepgramConnection() {
     ws.addEventListener("close", () => {
       console.log("[DEEPGRAM 🎥] Connection closed.");
     });
-
-    ws.addEventListener("message", async (event) => {
-      const data = JSON.parse(event.data) as LiveTranscriptionEvent;
-
-      const transcript = data.channel.alternatives[0].transcript;
-
-      console.log("[DEEPGRAM 🎥] Transcribed:", transcript);
+    ws.addEventListener("error", () => {
+      console.error("[DEEPGRAM 🎥] error.");
     });
+
+    // ws.addEventListener("message", async (event) => {
+    //   const data = JSON.parse(event.data) as LiveTranscriptionEvent;
+    //   onTranscript(data);
+
+    //   console.log(
+    //     "[DEEPGRAM 🎥] Transcribed:",
+    //     data.channel.alternatives[0].transcript
+    //   );
+    // });
   });
 
   return ws;
