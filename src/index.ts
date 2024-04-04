@@ -3,6 +3,7 @@ import { createBunWebSocket } from "hono/bun";
 import { createDeepgramConnection } from "./deepgram";
 import { createElevenLabsConnection } from "./elevenlabs";
 import { LiveTranscriptionEvent } from "@deepgram/sdk";
+import { chat } from "./openai";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket();
 
@@ -30,13 +31,17 @@ app.get(
           console.log("[DEEPGRAM 🎥] Transcribed:", transcript);
 
           if (transcript && isElevenLabsOpen()) {
-            console.log("[ELVENLABS] sending text: ", transcript);
-            elevenlabs.send(
-              JSON.stringify({
-                text: transcript + " ",
-                flush: true,
-              })
-            );
+            chat(transcript).then((resp) => {
+              console.log("[OPENAI] LLM response:", resp);
+
+              console.log("[ELVENLABS] sending text", resp);
+              elevenlabs.send(
+                JSON.stringify({
+                  text: resp + " ",
+                  flush: true,
+                })
+              );
+            });
           }
         });
 
