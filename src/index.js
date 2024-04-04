@@ -4,6 +4,7 @@ dotenv.config();
 import express from "express";
 import expressWs from "express-ws";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
+import OpenAI from "openai";
 
 import { tts } from "./tts.js";
 
@@ -11,6 +12,33 @@ const app = express();
 const port = Number(process.env.PORT ?? 3000);
 
 expressWs(app);
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+async function chat(text) {
+  const response = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [{ role: "user", content: text }],
+  });
+
+  return response.choices[0].message.content ?? "";
+}
+
+async function ttsStrean(text) {
+  return fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB/stream?optimize_streaming_latency=4`,
+    {
+      method: "POST",
+      headers: HEADERS,
+      body: JSON.stringify({
+        model_id: "eleven_multilingual_v2",
+        text,
+      }),
+    }
+  );
+}
 
 app.ws("/", function (ws, req) {
   console.log("[WSS] Client connected to server");
@@ -56,18 +84,18 @@ app.ws("/", function (ws, req) {
     deepgramConnection.on(LiveTranscriptionEvents.Transcript, (data) => {
       const transcript = data.channel.alternatives[0].transcript;
 
-      // if (transcript) {
-      //   chat(transcript).then((resp) => {
-      //     console.log("[OPENAI] Chat response:", resp);
-      //   });
-      // }
-
       if (transcript && isConnectionOpen) {
-        sendText(transcript);
+        chat(transcript).then((resp) => {
+          console.log("[OPENAI] LLM response:", resp);
+          sendText(resp);
+        });
       }
 
+      // if (transcript && isConnectionOpen) {
+      //   sendText(transcript);
+      // }
+
       console.log("[DEEPGRAM] Transcript:", transcript);
-      // ws.send(transcript);
     });
 
     deepgramConnection.on(LiveTranscriptionEvents.Metadata, (data) => {

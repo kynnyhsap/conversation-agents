@@ -23,10 +23,10 @@ export function createDeepgramConnection() {
   });
 
   ws.addEventListener("open", async (event) => {
-    console.log("[DEEPGRAM] Connection opened.");
+    console.log("[DEEPGRAM 🎥] Connection opened.");
 
     ws.addEventListener("close", () => {
-      console.log("[DEEPGRAM] Connection closed.");
+      console.log("[DEEPGRAM 🎥] Connection closed.");
     });
 
     ws.addEventListener("message", async (event) => {
@@ -34,7 +34,7 @@ export function createDeepgramConnection() {
 
       const transcript = data.channel.alternatives[0].transcript;
 
-      console.log("[DEEPGRAM] Transcript:", transcript);
+      console.log("[DEEPGRAM 🎥] Transcribed:", transcript);
     });
   });
 
