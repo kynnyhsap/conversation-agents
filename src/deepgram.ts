@@ -1,5 +1,5 @@
 import qs from "query-string";
-import { LiveTranscriptionEvent, LiveSchema } from "@deepgram/sdk";
+import { LiveSchema } from "@deepgram/sdk";
 
 const DEEPGRAM_URL = "wss://api.deepgram.com/v1/listen";
 
@@ -31,16 +31,6 @@ export function createDeepgramConnection() {
     ws.addEventListener("error", () => {
       console.error("[DEEPGRAM 🎥] error.");
     });
-
-    // ws.addEventListener("message", async (event) => {
-    //   const data = JSON.parse(event.data) as LiveTranscriptionEvent;
-    //   onTranscript(data);
-
-    //   console.log(
-    //     "[DEEPGRAM 🎥] Transcribed:",
-    //     data.channel.alternatives[0].transcript
-    //   );
-    // });
   });
 
   return ws;
