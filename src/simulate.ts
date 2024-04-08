@@ -4,7 +4,9 @@ const URL = "ws://localhost:3000?output_format=mp3_44100";
 
 const SAMPLE_RATE = 44100;
 const CHANNELS = 2;
-const AUDIO_DEVICE_INDEX = 1; // ffmpeg -f avfoundation -list_devices true -i ""
+
+// to determin the index of the audio device run this command: // ffmpeg -f avfoundation -list_devices true -i ""
+const AUDIO_DEVICE_INDEX = 0;
 
 const command = `ffmpeg -f avfoundation -i :${AUDIO_DEVICE_INDEX} -ac ${CHANNELS} -ar ${SAMPLE_RATE} -f wav -`;
 
@@ -23,6 +25,9 @@ ws.addEventListener("open", async (event) => {
     ws.send(chunk);
   }
 });
+
+// useful options:
+// --audio-device=coreaudio/BuiltInSpeakerDevice
 
 const mpv = spawn(`mpv -`.split(" "), {
   stdin: "pipe",
