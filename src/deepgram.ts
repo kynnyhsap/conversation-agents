@@ -11,6 +11,10 @@ export function createDeepgramConnection() {
     channels: 2,
     sample_rate: 44_100,
     encoding: "linear16",
+    utterance_end_ms: 1500,
+    interim_results: true,
+    profanity_filter: true,
+    diarize: true,
   };
 
   const headers = {
