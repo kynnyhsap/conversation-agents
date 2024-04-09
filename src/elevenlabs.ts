@@ -1,6 +1,6 @@
 import qs from "query-string";
 
-const voiceId = "5x4OabTaxKEADQiUryOC";
+const voiceId = "pNInz6obpgDQGcFmaJgB";
 const ELEVEN_LABS_API_URL = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input`;
 
 export function createElevenLabsConnection({
