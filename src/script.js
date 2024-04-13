@@ -3,7 +3,7 @@
 // https://developers.deepgram.com/docs/determining-your-audio-format-for-live-streaming-audio/#streaming-containerized-audio
 
 const audioContext = new AudioContext({
-  sampleRate: 44_100,
+  // sampleRate: 44_100,
 });
 
 let sourceNode;
@@ -42,14 +42,6 @@ ws.addEventListener("message", async (event) => {
   const audioBlob = event.data;
   const buff = await audioBlob.arrayBuffer();
   playAudio(buff);
-
-  // Convert the received audio blob to an ArrayBuffer
-  // const fileReader = new FileReader();
-  // fileReader.onload = () => {
-  //   const arrayBuffer = fileReader.result;
-  //   playAudio(arrayBuffer);
-  // };
-  // fileReader.readAsArrayBuffer(audioBlob);
 });
 ws.addEventListener("close", () => console.log("[WSS] Connection closed."));
 ws.addEventListener("error", () => console.error("[WSS] error."));
@@ -68,7 +60,7 @@ async function main() {
     ws.send(event.data);
   };
 
-  recorder.start(1000);
+  recorder.start(500);
 
   // stop recording after 10 seconds
   setTimeout(() => {
