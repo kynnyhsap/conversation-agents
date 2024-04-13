@@ -2,71 +2,58 @@
 // so when this data is passed to deepgram it should NOT specify encoding, sample_rate and channels
 // https://developers.deepgram.com/docs/determining-your-audio-format-for-live-streaming-audio/#streaming-containerized-audio
 
-const audioContext = new AudioContext({
-  // sampleRate: 44_100,
-});
+const audioContext = new AudioContext({});
 
-let sourceNode;
-
-function playAudio(arrayBuffer) {
-  const audioBuffer = new AudioBuffer({
-    length: arrayBuffer.byteLength / 2,
-    numberOfChannels: 1,
-    sampleRate: 44_100,
-  });
-
-  const channelData = audioBuffer.getChannelData(0);
-  const dataView = new Float32Array(arrayBuffer);
-  channelData.set(dataView);
-
-  if (sourceNode) {
-    sourceNode.disconnect();
-  }
-  sourceNode = audioContext.createBufferSource();
-  sourceNode.buffer = audioBuffer;
-  sourceNode.connect(audioContext.destination);
-  sourceNode.start(0);
-}
-
-const output_format = "pcm_44100"; // "mp3_44100";
+const output_format = "mp3_44100";
 
 const ws = new WebSocket(`ws://localhost:3000?output_format=${output_format}`);
 
-ws.addEventListener("open", async (event) => {
-  console.log("[WSS] Connected to websocket. Sending live audio...");
-});
+ws.addEventListener("error", (e) => console.error("[🍌] error", e));
+ws.addEventListener("close", (e) => console.log("[🍌] closed", e));
+ws.addEventListener("open", (e) => console.log("[🍌] opened", e));
+
+async function handleChunk(blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+  const source = audioContext.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(audioContext.destination);
+
+  source.start();
+
+  source.onended = () => {
+    console.log("Audio chunk finished playing", blob);
+  };
+}
 
 ws.addEventListener("message", async (event) => {
-  console.log("[WSS] Decoding audio from message...", event.data);
+  console.log("[🍌] decoding audio from message...", event.data);
 
-  const audioBlob = event.data;
-  const buff = await audioBlob.arrayBuffer();
-  playAudio(buff);
+  await handleChunk(event.data);
 });
-ws.addEventListener("close", () => console.log("[WSS] Connection closed."));
-ws.addEventListener("error", () => console.error("[WSS] error."));
 
 async function main() {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const recorder = new MediaRecorder(stream);
 
-  // let firstChunk = undefined;
   recorder.ondataavailable = async (event) => {
     if (event.data.size === 0 || ws.readyState !== WebSocket.OPEN) {
       return;
     }
 
-    console.log("[Recorder] Sending audio chunk to websocket...", event.data);
+    console.log("[📽️] sending recorded audio chunk...", event.data);
     ws.send(event.data);
   };
 
   recorder.start(500);
 
-  // stop recording after 10 seconds
+  // stop recording after 20 seconds
   setTimeout(() => {
     recorder.stop();
     ws.close();
-  }, 10000);
+  }, 20000);
 }
 
 main();
