@@ -37,7 +37,7 @@ app.get(
       onOpen(event, ws) {
         console.log("[WSS] Client connected to server.");
 
-        deepgram.addEventListener("message", (event) => {
+        deepgram.addEventListener("message", async (event) => {
           const data = JSON.parse(event.data) as LiveTranscriptionEvent;
 
           deepgramMessages.push(data);
@@ -60,45 +60,24 @@ app.get(
             return; // we can't send anything to elevenlabs if we're not connected yet
           }
 
-          // const speakers: number[] = data.channel.alternatives[0].words.map(
-          //   (w) => w.speaker
-          // );
-          // const firstSpeaker = speakers[0];
-          // const hasMultipleSpeakers = speakers.some((s) => s !== firstSpeaker);
-          // console.log("[DEEPGRAM 🎥] T:", {
-          //   speakers,
-          //   hasMultipleSpeakers,
-          //   transcript,
-          // });
-
           console.log("[DEEPGRAM 🎥] T:", transcript);
 
-          const isFromSelf = chatHistory.some(({ message }) =>
-            (message.content ?? "")
-              .toLowerCase()
-              .includes(transcript.toLocaleLowerCase())
-          );
+          const message = await chat(transcript, chatHistory);
 
-          if (isFromSelf) {
-            return; // we don't care about self-transcription
-          }
-
-          chat(transcript, chatHistory).then((message) => {
-            chatHistory.push({
-              prompt: transcript,
-              message,
-            });
-
-            console.log("[OPENAI] LLM response:", message.content);
-
-            // console.log("[ELVENLABS] sending text", resp);
-            elevenlabs.send(
-              JSON.stringify({
-                text: message.content + " ",
-                flush: true,
-              })
-            );
+          chatHistory.push({
+            prompt: transcript,
+            message,
           });
+
+          console.log("[OPENAI] LLM response:", message.content);
+
+          // console.log("[ELVENLABS] sending text", resp);
+          elevenlabs.send(
+            JSON.stringify({
+              text: message.content + " ",
+              flush: true,
+            })
+          );
         });
 
         elevenlabs.addEventListener("message", (event) => {

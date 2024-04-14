@@ -83,7 +83,7 @@ async function main() {
   setTimeout(() => {
     recorder.stop();
     ws.close();
-  }, 20000);
+  }, 30000);
 }
 
 main();

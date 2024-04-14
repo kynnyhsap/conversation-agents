@@ -26,8 +26,6 @@ export async function chat(text: string, chatHistory: ChatHisotryItem[]) {
     ],
   });
 
-  console.log("[OPENAI] LLM response:", response);
-
   return response.choices[0].message;
 }
 
