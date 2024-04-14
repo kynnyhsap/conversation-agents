@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run ./src/index.ts",
+    "dev": "bun run --watch ./src/index.ts",
     "sim": "bun run ./src/simulate.ts",
     "input-device": "ffmpeg -f avfoundation -list_devices true -i ''"
   },

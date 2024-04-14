@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createBunWebSocket } from "hono/bun";
+import { createBunWebSocket, serveStatic } from "hono/bun";
 
 import { createDeepgramConnection } from "./deepgram";
 import { createElevenLabsConnection } from "./elevenlabs";
@@ -16,6 +16,8 @@ const chatHistory: ChatHisotryItem[] = [];
 
 const deepgramMessages: any[] = [];
 
+app.use("/static/*", serveStatic({ root: "./" }));
+
 app.get(
   "/",
   upgradeWebSocket((c) => {
@@ -28,6 +30,8 @@ app.get(
     const isElevenLabsOpen = () => elevenlabs.readyState === WebSocket.OPEN;
 
     let startTimestamp = 0;
+
+    const chunks: Buffer[] = [];
 
     return {
       onOpen(event, ws) {
@@ -108,7 +112,8 @@ app.get(
 
             const buf = Buffer.from(data.audio, "base64");
 
-            console.log("[WSS] Sending audio chunk to client...");
+            chunks.push(buf);
+
             ws.send(buf);
           }
         });
@@ -135,6 +140,13 @@ app.get(
         elevenlabs.close();
 
         const tmpFolder = `./tmp/${startTimestamp}`;
+
+        if (chunks.length > 0) {
+          await Bun.write(
+            `${tmpFolder}/audio.mp3`,
+            new Blob(chunks, { type: "audio/mp3" })
+          ).catch(console.error);
+        }
 
         await Bun.write(
           `${tmpFolder}/deepgram.json`,
