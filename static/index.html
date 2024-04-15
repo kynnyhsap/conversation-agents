@@ -13,6 +13,80 @@
       }
     </style>
 
-    <script src="./script.js"></script>
+    <!-- <button id="start-recording">Start recording</button> -->
+
+    <script>
+      // IMPORTANT: the audio recorded by the MediaRecorder is what considered "conteinerized" aduio,
+      // so when this data is passed to deepgram it should NOT specify encoding, sample_rate and channels
+      // https://developers.deepgram.com/docs/determining-your-audio-format-for-live-streaming-audio/#streaming-containerized-audio
+
+      const TIMESLICE = 500;
+
+      const OUTPUT_FORMAT = "mp3_44100";
+      const WS_URL = "ws://localhost:4000";
+
+      async function conversation() {
+        const audioQueue = [];
+
+        const audioContext = new AudioContext({});
+
+        let nextChunkStartTime = audioContext.currentTime;
+
+        const ws = new WebSocket(`${WS_URL}?output_format=${OUTPUT_FORMAT}`);
+
+        ws.addEventListener("error", (e) => console.error("[🍌] error", e));
+        ws.addEventListener("close", (e) => console.log("[🍌] closed", e));
+        ws.addEventListener("open", (e) => console.log("[🍌] opened", e));
+
+        ws.addEventListener("message", async (event) => {
+          console.log("[🧽] audio chunk recieved...", event.data);
+
+          const blob = event.data;
+
+          const arrayBuffer = await blob.arrayBuffer();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+          const source = audioContext.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(audioContext.destination);
+
+          if (nextChunkStartTime < audioContext.currentTime) {
+            // the current time is already past the nextChunkStartTime
+            // so we should play the next chunk
+
+            source.start(audioContext.currentTime);
+
+            nextChunkStartTime =
+              audioContext.currentTime + audioBuffer.duration;
+          } else {
+            // the current time isn't past the nextChunkStartTime
+            // so we should schedule the play
+
+            source.start(nextChunkStartTime);
+
+            nextChunkStartTime += audioBuffer.duration;
+          }
+        });
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        const recorder = new MediaRecorder(stream);
+
+        recorder.ondataavailable = async (event) => {
+          if (event.data.size === 0 || ws.readyState !== WebSocket.OPEN) {
+            return;
+          }
+
+          console.log("[📽️] sending recorded audio chunk...", event.data);
+
+          ws.send(event.data);
+        };
+
+        recorder.start(TIMESLICE);
+      }
+
+      conversation();
+    </script>
   </body>
 </html>

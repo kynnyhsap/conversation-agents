@@ -187,4 +187,5 @@ app.get(
 Bun.serve({
   fetch: app.fetch,
   websocket,
+  port: process.env.PORT ?? 4000,
 });

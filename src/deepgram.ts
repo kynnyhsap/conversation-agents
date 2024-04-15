@@ -22,6 +22,7 @@ export function createDeepgramConnection() {
     profanity_filter: false,
   };
 
+  console.time("deepgram connection latency");
   const ws = new WebSocket(`${DEEPGRAM_URL}?${qs.stringify(params)}`, {
     // @ts-ignore
     headers: {
@@ -30,6 +31,8 @@ export function createDeepgramConnection() {
   });
 
   ws.addEventListener("open", async (event) => {
+    console.timeEnd("deepgram connection latency");
+
     console.log("[DEEPGRAM 🎥] Connection opened.");
 
     ws.addEventListener("close", () => {

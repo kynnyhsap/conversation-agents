@@ -14,9 +14,12 @@ export function createElevenLabsConnection({
     output_format: output_format ?? "pcm_16000",
   };
 
+  console.time("elevenlab connection latency");
   const ws = new WebSocket(`${ELEVEN_LABS_API_URL}?${qs.stringify(params)}`);
 
   ws.addEventListener("open", async (event) => {
+    console.timeEnd("elevenlab connection latency");
+
     console.log("[ELVENLABS] Connection opened.");
 
     ws.addEventListener("close", () => {
