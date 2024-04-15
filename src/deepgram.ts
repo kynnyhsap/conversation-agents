@@ -3,7 +3,7 @@ import { LiveSchema } from "@deepgram/sdk";
 
 const DEEPGRAM_URL = "wss://api.deepgram.com/v1/listen";
 
-export function createDeepgramConnection() {
+export function createDeepgramConnection(options: LiveSchema) {
   const params: LiveSchema = {
     model: "nova-2",
 
@@ -11,9 +11,7 @@ export function createDeepgramConnection() {
 
     // NOTE: audio recorded with web browser is conteinerized, hence we shoudn't specify encoding, sample_rate and channels
 
-    channels: 2,
-    sample_rate: 44_100,
-    encoding: "linear16",
+    ...options,
 
     smart_format: true,
     utterance_end_ms: 1500,
