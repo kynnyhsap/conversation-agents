@@ -26,51 +26,50 @@
       const WS_URL = "ws://localhost:4000";
 
       async function conversation() {
-        const audioQueue = [];
-
-        const audioContext = new AudioContext({});
-
-        let nextChunkStartTime = audioContext.currentTime;
-
         const ws = new WebSocket(`${WS_URL}?output_format=${OUTPUT_FORMAT}`);
 
         ws.addEventListener("error", (e) => console.error("[🍌] error", e));
         ws.addEventListener("close", (e) => console.log("[🍌] closed", e));
         ws.addEventListener("open", (e) => console.log("[🍌] opened", e));
 
+        const audioContext = new AudioContext();
+
+        let nextStartTime = audioContext.currentTime;
+        const queue = [];
+
+        async function schedulePlayback() {
+          while (queue.length > 0) {
+            const blob = queue.shift();
+
+            const arrayBuffer = await blob.arrayBuffer();
+
+            const source = audioContext.createBufferSource();
+            source.buffer = await audioContext.decodeAudioData(arrayBuffer);
+            source.connect(audioContext.destination);
+
+            const startTime = Math.max(nextStartTime, audioContext.currentTime);
+            nextStartTime = startTime + source.buffer.duration;
+
+            source.start(startTime);
+
+            source.onended = () => {
+              source.disconnect();
+            };
+          }
+        }
+
         ws.addEventListener("message", async (event) => {
           console.log("[🧽] audio chunk recieved...", event.data);
 
-          const blob = event.data;
+          queue.push(event.data);
 
-          const arrayBuffer = await blob.arrayBuffer();
-          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-          const source = audioContext.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(audioContext.destination);
-
-          if (nextChunkStartTime < audioContext.currentTime) {
-            // the current time is already past the nextChunkStartTime
-            // so we should play the next chunk
-
-            source.start(audioContext.currentTime);
-
-            nextChunkStartTime =
-              audioContext.currentTime + audioBuffer.duration;
-          } else {
-            // the current time isn't past the nextChunkStartTime
-            // so we should schedule the play
-
-            source.start(nextChunkStartTime);
-
-            nextChunkStartTime += audioBuffer.duration;
-          }
+          schedulePlayback();
         });
 
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+
         const recorder = new MediaRecorder(stream);
 
         recorder.ondataavailable = async (event) => {
@@ -78,7 +77,11 @@
             return;
           }
 
-          console.log("[📽️] sending recorded audio chunk...", event.data);
+          console.log(
+            "[📽️] sending recorded audio chunk...",
+            event.data.size,
+            event.data.type
+          );
 
           ws.send(event.data);
         };
