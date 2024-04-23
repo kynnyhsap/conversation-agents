@@ -22,15 +22,11 @@ app.get(
   "/",
   upgradeWebSocket((c) => {
     const output_format = c.req.query("output_format") ?? "pcm_16000";
-    const channels = Number(c.req.query("channels")) ?? 2;
-    const sample_rate = Number(c.req.query("sample_rate")) ?? 44_100;
-    const encoding = c.req.query("encoding") ?? "linear16";
+    // const channels = Number(c.req.query("channels")) ?? 2;
+    // const sample_rate = Number(c.req.query("sample_rate")) ?? 44_100;
+    // const encoding = c.req.query("encoding") ?? "linear16";
 
-    const deepgram = createDeepgramConnection({
-      channels,
-      sample_rate,
-      encoding,
-    });
+    const deepgram = createDeepgramConnection();
 
     const elevenlabs = createElevenLabsConnection({ output_format });
 
@@ -195,5 +191,5 @@ app.get(
 Bun.serve({
   fetch: app.fetch,
   websocket,
-  port: process.env.PORT ?? 4000,
+  port: process.env.PORT ?? 3000,
 });
