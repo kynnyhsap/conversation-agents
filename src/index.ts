@@ -16,15 +16,14 @@ const chatHistory: ChatHisotryItem[] = [];
 
 const deepgramMessages: any[] = [];
 
+const inputAudioBuffers: ArrayBuffer[] = [];
+
 app.use("/static/*", serveStatic({ root: "./" }));
 
 app.get(
   "/",
   upgradeWebSocket((c) => {
     const output_format = c.req.query("output_format") ?? "pcm_16000";
-    // const channels = Number(c.req.query("channels")) ?? 2;
-    // const sample_rate = Number(c.req.query("sample_rate")) ?? 44_100;
-    // const encoding = c.req.query("encoding") ?? "linear16";
 
     const deepgram = createDeepgramConnection();
 
@@ -103,12 +102,15 @@ app.get(
       },
 
       onMessage(message, ws) {
+        const data = message.data as ArrayBuffer;
+
+        inputAudioBuffers.push(data);
+
         if (isDeepgramOpen()) {
           if (!startTimestamp) {
             startTimestamp = Date.now();
           }
 
-          const data = message.data as ArrayBuffer;
           deepgram.send(data);
         }
       },
@@ -130,6 +132,11 @@ app.get(
             new Blob(chunks, { type: "audio/mp3" })
           ).catch(console.error);
         }
+
+        await Bun.write(
+          `${tmpFolder}/input-audio.wav`,
+          new Blob(inputAudioBuffers, { type: "audio/wav" })
+        );
 
         await Bun.write(
           `${tmpFolder}/deepgram.json`,
