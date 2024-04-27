@@ -14,18 +14,15 @@ const ffmpeg = spawn(command.split(" "), {
   stderr: "ignore", // run quietly
 });
 const recordingStream = ffmpeg.stdout;
-
-const fileStream = Bun.file("experiments/input-audio-2.pcm").stream();
+// const recordingStream = Bun.file("experiments/input-audio-2.pcm").stream();
 
 const ws = new WebSocket(URL);
 
 ws.addEventListener("open", async (event) => {
   console.log("[Simulated WS] Connected to websocket. Sending live audio...");
 
-  await Bun.sleep(2000);
-
   // @ts-ignore
-  for await (const chunk of fileStream) {
+  for await (const chunk of recordingStream) {
     // console.log("[Simulated WS] Sending chunk...", chunk.length);
     ws.send(chunk);
   }
@@ -41,6 +38,8 @@ const mpv = spawn(`mpv -`.split(" "), {
 
 ws.addEventListener("message", async (event) => {
   const buf = event.data as Uint8Array;
+
+  // console.log("message", event);
 
   mpv.stdin.write(buf);
   mpv.stdin.flush();

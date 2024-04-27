@@ -4,6 +4,7 @@ import { chat } from "./openai.js";
 import { getLLMCost, getTTSCost, getTranscriptionCost } from "./pricing.js";
 import prettyms from "pretty-ms";
 import fs from "fs";
+import url from "url";
 
 import WebSocket, { WebSocketServer } from "ws";
 
@@ -14,14 +15,18 @@ const outputAudioChunks = [];
 
 const wss = new WebSocketServer({ port: Number(process.env.PORT ?? 3000) });
 
-wss.on("connection", (ws) => {
-  console.log("[WSS] Client connected to server.");
+wss.on("connection", (ws, req) => {
+  const { output_format } = url.parse(req.url, true).query;
+
+  console.log("[WSS] Client connected to server.", { output_format });
 
   const startTimestamp = Date.now();
 
   const deepgram = createDeepgramConnection();
 
-  const elevenlabs = createElevenLabsConnection({ output_format: "pcm_16000" });
+  const elevenlabs = createElevenLabsConnection({
+    output_format: output_format ?? "pcm_16000",
+  });
 
   const isDeepgramOpen = () => deepgram.readyState === WebSocket.OPEN;
   const isElevenLabsOpen = () => elevenlabs.readyState === WebSocket.OPEN;
@@ -90,7 +95,6 @@ wss.on("connection", (ws) => {
     inputAudioBuffers.push(message);
 
     if (isDeepgramOpen()) {
-      console.log("[DEEPGRAM 🎥] Sending audio chunk to Deepgram.");
       deepgram.send(message);
     }
   });
@@ -99,13 +103,18 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     deepgram.close();
 
-    const duration = Date.now() - startTimestamp;
+    const endTimestamp = Date.now();
+    const duration = endTimestamp - startTimestamp;
 
     console.log("[DEEPGRAM 🎥] Duration:", prettyms(duration));
 
     elevenlabs.close();
 
     const tmpFolder = `./tmp/${startTimestamp}`;
+
+    if (!fs.existsSync(tmpFolder)) {
+      fs.mkdirSync(tmpFolder);
+    }
 
     // TODO: save audio chunks
 
