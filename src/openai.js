@@ -1,15 +1,10 @@
 import OpenAI from "openai";
-import {
-  ChatCompletionMessage,
-  ChatCompletionMessageParam,
-  ChatCompletionUserMessageParam,
-} from "openai/resources";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function chat(text: string, chatHistory: ChatHisotryItem[]) {
+export async function chat(text, chatHistory) {
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [
@@ -17,7 +12,11 @@ export async function chat(text: string, chatHistory: ChatHisotryItem[]) {
 
       ...chatHistory
         .map(({ prompt, message }) => [
-          { role: "user", content: prompt } as ChatCompletionUserMessageParam,
+          {
+            role: "user",
+            content: prompt,
+          },
+
           message,
         ])
         .flat(),
@@ -29,7 +28,7 @@ export async function chat(text: string, chatHistory: ChatHisotryItem[]) {
   return response.choices[0].message;
 }
 
-export type ChatHisotryItem = {
-  prompt: string;
-  message: ChatCompletionMessage;
-};
+// export type ChatHisotryItem = {
+//   prompt: string;
+//   message: OpenAI.ChatCompletionMessage;
+// };

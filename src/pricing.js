@@ -9,17 +9,17 @@ const LLM_OUTPUT_COST_PER_CHAR = 1.5 / 1_000_000 / 4; // 0.5$ tokens per 1M toke
 // ElevenLabs
 const TTS_COST_PER_CHAR = 0.18 / 1000; // 0.18$ per 1000 chars
 
-export function getTranscriptionCost(durationMs: number) {
+export function getTranscriptionCost(durationMs) {
   return durationMs * TRANSCRIPTION_COST_PER_MS;
 }
 
-export function getLLMCost(prompt: string, response: string): number {
+export function getLLMCost(prompt, response) {
   return (
     prompt.length * LLM_INPUT_COST_PER_CHAR +
     response.length * LLM_OUTPUT_COST_PER_CHAR
   );
 }
 
-export function getTTSCost(text: string): number {
+export function getTTSCost(text) {
   return text.length * TTS_COST_PER_CHAR;
 }

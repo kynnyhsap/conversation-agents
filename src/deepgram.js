@@ -1,10 +1,10 @@
 import qs from "query-string";
-import { LiveSchema } from "@deepgram/sdk";
+import WebSocket from "ws";
 
 const DEEPGRAM_URL = "wss://api.deepgram.com/v1/listen";
 
 export function createDeepgramConnection() {
-  const params: LiveSchema = {
+  const params = {
     model: "nova-2",
 
     language: "en-US",
@@ -22,11 +22,10 @@ export function createDeepgramConnection() {
     profanity_filter: false,
   };
 
-  console.log("params", params);
+  console.log({ params });
 
   console.time("deepgram connection latency");
   const ws = new WebSocket(`${DEEPGRAM_URL}?${qs.stringify(params)}`, {
-    // @ts-ignore
     headers: {
       Authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
     },

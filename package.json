@@ -2,8 +2,7 @@
   "name": "conversation-api",
   "type": "module",
   "scripts": {
-    "start": "bun run ./src/index.ts",
-    "dev": "bun run --watch ./src/index.ts",
+    "start": "node --env-file=.env ./src/index.js",
     "sim": "bun run ./src/simulate.ts",
     "input-device": "ffmpeg -f avfoundation -list_devices true -i ''"
   },
@@ -12,7 +11,8 @@
     "hono": "^4.2.1",
     "openai": "^4.31.0",
     "pretty-ms": "^9.0.0",
-    "query-string": "^9.0.0"
+    "query-string": "^9.0.0",
+    "ws": "^8.16.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
