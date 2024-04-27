@@ -10,7 +10,7 @@ import WebSocket, { WebSocketServer } from "ws";
 
 const deepgramMessages = [];
 const chatHistory = [];
-const inputAudioBuffers = [];
+const inputAudioChunks = [];
 const outputAudioChunks = [];
 
 const wss = new WebSocketServer({ port: Number(process.env.PORT ?? 3000) });
@@ -92,7 +92,7 @@ wss.on("connection", (ws, req) => {
   });
 
   ws.on("message", (message) => {
-    inputAudioBuffers.push(message);
+    inputAudioChunks.push(message);
 
     if (isDeepgramOpen()) {
       deepgram.send(message);
@@ -118,17 +118,11 @@ wss.on("connection", (ws, req) => {
 
     // TODO: save audio chunks
 
-    // if (chunks.length > 0) {
-    //   await Bun.write(
-    //     `${tmpFolder}/audio.mp3`,
-    //     new Blob(chunks, { type: "audio/mp3" }),
-    //   ).catch(console.error);
-    // }
-
-    // await Bun.write(
-    //   `${tmpFolder}/input-audio.pcm`,
-    //   new Blob(inputAudioBuffers),
-    // );
+    fs.writeFileSync(
+      `${tmpFolder}/output.mp3`,
+      Buffer.concat(outputAudioChunks),
+    );
+    fs.writeFileSync(`${tmpFolder}/input.mp3`, Buffer.concat(inputAudioChunks));
 
     const saveJson = (filename, data) =>
       fs.writeFileSync(
@@ -136,7 +130,7 @@ wss.on("connection", (ws, req) => {
         JSON.stringify(data, null, 2),
       );
 
-    saveJson("deepgram", deepgramMessages);
+    saveJson("deepgram-messages", deepgramMessages);
     saveJson("chat-history", chatHistory);
 
     const metadata = {
