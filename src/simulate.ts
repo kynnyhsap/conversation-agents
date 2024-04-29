@@ -1,18 +1,27 @@
 import { spawn } from "bun";
+import { parseArgs } from "util";
 
-const URL = "ws://localhost:3000?output_format=mp3_44100";
+const output_format = "mp3_44100";
+
+const URL = `ws://localhost:3000?output_format=${output_format}`;
 
 const SAMPLE_RATE = 44100;
 const CHANNELS = 2;
 
-// to determin the index of the audio device run this command: // ffmpeg -f avfoundation -list_devices true -i ""
-const AUDIO_DEVICE_INDEX = 2;
+const { values: args } = parseArgs({
+  args: Bun.argv,
+  allowPositionals: true,
+  options: {
+    index: { type: "string" }, // audio device index
+  },
+});
+
+// to determin the index of the audio device run this command:
+// ffmpeg -f avfoundation -list_devices true -i ""
+const AUDIO_DEVICE_INDEX = Number(args.index) ?? 0;
 
 const command = `ffmpeg -f avfoundation -i :${AUDIO_DEVICE_INDEX} -ac ${CHANNELS} -ar ${SAMPLE_RATE} -f wav -`;
-
-const ffmpeg = spawn(command.split(" "), {
-  stderr: "ignore", // run quietly
-});
+const ffmpeg = spawn(command.split(" "), { stderr: "ignore" });
 const recordingStream = ffmpeg.stdout;
 // const recordingStream = Bun.file("experiments/input-audio-2.pcm").stream();
 
