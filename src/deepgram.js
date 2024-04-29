@@ -1,5 +1,4 @@
 import qs from "query-string";
-import WebSocket from "ws";
 
 const DEEPGRAM_URL = "wss://api.deepgram.com/v1/listen";
 
@@ -16,13 +15,13 @@ export function createDeepgramConnection() {
     encoding: "linear16",
 
     smart_format: true,
-    utterance_end_ms: 1500,
+    utterance_end_ms: 1000,
     interim_results: true,
     diarize: true,
     profanity_filter: false,
   };
 
-  console.log({ params });
+  console.log("[DEEPGRAM 🎥] params", params);
 
   console.time("deepgram connection latency");
   const ws = new WebSocket(`${DEEPGRAM_URL}?${qs.stringify(params)}`, {
@@ -42,6 +41,11 @@ export function createDeepgramConnection() {
     ws.addEventListener("error", (e) => {
       console.error("[DEEPGRAM 🎥] error.", e);
     });
+
+    // setInterval(() => {
+    //   ws.send(JSON.stringify({ type: "KeepAlive" }));
+    //   console.log("[DEEPGRAM 🎥] sending keep alive");
+    // }, 3000);
   });
 
   return ws;

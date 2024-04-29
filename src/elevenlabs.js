@@ -1,5 +1,4 @@
 import qs from "query-string";
-import WebSocket from "ws";
 
 const voiceId = "pNInz6obpgDQGcFmaJgB";
 const ELEVEN_LABS_API_URL = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input`;
