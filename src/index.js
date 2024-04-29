@@ -1,6 +1,7 @@
 import { createDeepgramConnection } from "./deepgram.js";
-import { createElevenLabsConnection } from "./elevenlabs.js";
-import { chat } from "./groq.js";
+import { ttsStream } from "./elevenlabs.js";
+// import { chat } from "./groq.js";
+import { chat, chatStream } from "./openai.js";
 import { getLLMCost, getTTSCost, getTranscriptionCost } from "./pricing.js";
 import prettyms from "pretty-ms";
 import fs from "fs";
@@ -27,11 +28,6 @@ wss.on("connection", (ws, req) => {
 
   const currentTranscripts = [];
 
-  // const elevenlabs = createElevenLabsConnection({
-  //   output_format: output_format ?? "pcm_16000",
-  // });
-  // const isElevenLabsOpen = () => elevenlabs.readyState === WebSocket.OPEN;
-
   deepgram.addEventListener("message", async (messageEvent) => {
     const data = JSON.parse(messageEvent.data);
 
@@ -48,51 +44,42 @@ wss.on("connection", (ws, req) => {
         return; // we don't care about non-final results
       }
 
-      console.log("[DEEPGRAM 🎥] T:", transcript);
-
       currentTranscripts.push(transcript);
     }
 
     if (data.type === "UtteranceEnd") {
       const prompt = currentTranscripts.join(" ");
+      currentTranscripts.length = 0; // clear the array
 
-      // console.log("[LLM] prompt:", prompt);
+      if (!prompt) {
+        return;
+      }
+
+      console.log("[DEEPGRAM 🎥] T:", prompt);
+
       console.time("llm response time");
       const message = await chat(prompt, chatHistory);
-      console.timeEnd("llm response time");
-      console.log("[LLM] ", message.content);
-
       chatHistory.push({ prompt, message });
+      console.timeEnd("llm response time");
+
+      const speechStream = await ttsStream(message.content, output_format);
+
+      for await (const chunk of speechStream) {
+        ws.send(chunk);
+      }
+
+      // const stream = await chatStream(prompt, chatHistory);
+      // let response = "";
+      // for await (const chunk of stream) {
+      //   const content = chunk.choices[0]?.delta?.content ?? "";
+      //   response += content;
+      //   process.stdout.write(content);
+      // }
+      // console.log("[LLM] ", message.content);
+
+      // TODO
     }
-
-    // if (!isElevenLabsOpen()) {
-    //   return; // we can't send anything to elevenlabs if we're not connected yet
-    // }
-
-    // elevenlabs.send(
-    //   JSON.stringify({
-    //     text: message.content + " ",
-    //     flush: true,
-    //   }),
-    // );
   });
-
-  // elevenlabs.addEventListener("message", (messageEvent) => {
-  //   const data = JSON.parse(messageEvent.data);
-
-  //   if (data.audio) {
-  //     console.log(
-  //       "[ELEVENLABS] Recieved audio chunk:",
-  //       data.audio.slice(0, 15) + "..."
-  //     );
-
-  //     const buf = Buffer.from(data.audio, "base64");
-
-  //     outputAudioChunks.push(buf);
-
-  //     ws.send(buf);
-  //   }
-  // });
 
   ws.on("message", (message) => {
     inputAudioChunks.push(message);
@@ -106,7 +93,6 @@ wss.on("connection", (ws, req) => {
 
   ws.on("close", () => {
     deepgram.close();
-    // elevenlabs.close();
 
     const endTimestamp = Date.now();
     const duration = endTimestamp - startTimestamp;

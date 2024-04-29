@@ -1,38 +1,36 @@
 import qs from "query-string";
 
-const voiceId = "pNInz6obpgDQGcFmaJgB";
-const ELEVEN_LABS_API_URL = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input`;
+export const ELEVEN_LABS_API_URI = "https://api.elevenlabs.io/v1";
 
-export function createElevenLabsConnection({ output_format }) {
-  const params = {
-    model_id: "eleven_multilingual_v2",
-    optimize_streaming_latency: 4,
-    output_format: output_format ?? "pcm_16000",
-  };
+const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;
 
-  console.time("elevenlab connection latency");
-  const ws = new WebSocket(`${ELEVEN_LABS_API_URL}?${qs.stringify(params)}`);
+const model_id = "eleven_turbo_v2";
+const optimize_streaming_latency = 4;
+const ADAM_VOICE_ID = "pNInz6obpgDQGcFmaJgB";
 
-  ws.addEventListener("open", async (event) => {
-    console.timeEnd("elevenlab connection latency");
+export async function ttsStream(
+  text,
+  output_format = "pcm_16000",
+  voiceId = ADAM_VOICE_ID,
+) {
+  const response = await fetch(
+    `${ELEVEN_LABS_API_URI}/text-to-speech/${voiceId}/stream?${qs.stringify({
+      optimize_streaming_latency,
+      output_format,
+    })}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Xi-Api-Key": ELEVEN_LABS_API_KEY,
+      },
+      body: JSON.stringify({ model_id, text }),
+    },
+  );
 
-    console.log("[ELVENLABS] Connection opened.");
+  if (!response.body) {
+    throw new Error("Response body is null");
+  }
 
-    ws.addEventListener("close", () => {
-      console.log("[ELVENLABS] Collection closed.");
-    });
-    ws.addEventListener("error", () => {
-      console.error("[ELVENLABS] error.");
-    });
-
-    ws.send(
-      JSON.stringify({
-        text: " ",
-        xi_api_key: process.env.ELEVEN_LABS_API_KEY,
-      }),
-    );
-    console.log("[ELVENLABS] tts started...");
-  });
-
-  return ws;
+  return response.body;
 }

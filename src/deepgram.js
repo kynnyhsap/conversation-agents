@@ -4,7 +4,7 @@ const DEEPGRAM_URL = "wss://api.deepgram.com/v1/listen";
 
 export function createDeepgramConnection() {
   const params = {
-    model: "nova-2",
+    model: "nova-2-conversationalai",
 
     language: "en-US",
 
