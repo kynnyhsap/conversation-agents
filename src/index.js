@@ -1,7 +1,6 @@
 import { createDeepgramConnection } from "./deepgram.js";
 import { ttsStream } from "./elevenlabs.js";
-// import { chat } from "./groq.js";
-import { chat, chatStream } from "./openai.js";
+import { chat } from "./openai.js";
 import { getLLMCost, getTTSCost, getTranscriptionCost } from "./pricing.js";
 import prettyms from "pretty-ms";
 import fs from "fs";
