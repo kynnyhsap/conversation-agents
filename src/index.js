@@ -56,27 +56,24 @@ wss.on("connection", (ws, req) => {
 
       console.log("[DEEPGRAM 🎥] T:", prompt);
 
-      console.time("llm response time");
+      console.time("llm ttfb");
       const message = await chat(prompt, chatHistory);
       chatHistory.push({ prompt, message });
-      console.timeEnd("llm response time");
+      console.timeEnd("llm ttfb");
 
+      console.log("[LLM 🤖] R:", message.content);
+
+      let firstChunkLoaded = false;
+      console.time("tts ttfg");
       const speechStream = await ttsStream(message.content, output_format);
-
       for await (const chunk of speechStream) {
+        if (!firstChunkLoaded) {
+          firstChunkLoaded = true;
+          console.timeEnd("tts ttfg");
+        }
+
         ws.send(chunk);
       }
-
-      // const stream = await chatStream(prompt, chatHistory);
-      // let response = "";
-      // for await (const chunk of stream) {
-      //   const content = chunk.choices[0]?.delta?.content ?? "";
-      //   response += content;
-      //   process.stdout.write(content);
-      // }
-      // console.log("[LLM] ", message.content);
-
-      // TODO
     }
   });
 
