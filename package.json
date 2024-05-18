@@ -2,7 +2,7 @@
   "name": "conversation-api",
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env ./src/index.js",
+    "start": "node ./src/index.js",
     "sim": "bun run ./src/simulate.ts",
     "input-device": "ffmpeg -f avfoundation -list_devices true -i ''"
   },
