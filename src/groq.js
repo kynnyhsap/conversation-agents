@@ -5,7 +5,7 @@ const groq = new Groq({
 });
 
 // const systemPrompt = `You are an AI-toy companion, answer kid's questions and explain nicely in a fun manner. Do not tell anything inappropriate for a kid. If inappropriate question asked - tell you are just a robot and refer to humans to answer. Be very concise.`;
-const systemPrompt = `Be very concise. No yapping.`;
+const systemPrompt = `Be concise and succinct.`;
 
 export async function chat(text, chatHistory) {
   const response = await groq.chat.completions.create({

@@ -4,7 +4,7 @@ export const ELEVEN_LABS_API_URI = "https://api.elevenlabs.io/v1";
 
 const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;
 
-const model_id = "eleven_turbo_v2";
+const model_id = "eleven_multilingual_v2"; // "eleven_turbo_v2";
 const optimize_streaming_latency = 4;
 const ADAM_VOICE_ID = "pNInz6obpgDQGcFmaJgB";
 

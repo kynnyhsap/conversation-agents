@@ -59,7 +59,10 @@ keyHoldEmitter.addListener("exit", () => {
 });
 // e.addListener("hold", () => Bun.write(stdin, "."));
 
-const mpv = spawn(`mpv -`.split(" "), { stdin: "pipe", stdout: "ignore" });
+const mpv = spawn(`mpv -`.split(" "), {
+  stdin: "pipe",
+  stderr: "ignore",
+});
 
 const outputAudioBuffers: Uint8Array[] = [];
 
