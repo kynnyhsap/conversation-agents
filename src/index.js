@@ -102,6 +102,11 @@ wss.on("connection", (ws, req) => {
   ws.on("close", () => {
     deepgram.close();
 
+    if (process.env.NODE_ENV === "production") {
+      console.log("[WSS] Connection closed.");
+      return;
+    }
+
     const endTimestamp = Date.now();
     const duration = endTimestamp - startTimestamp;
 
