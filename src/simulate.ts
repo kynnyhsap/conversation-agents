@@ -4,8 +4,8 @@ import { listedForKeyHold } from "./stdin";
 
 const output_format = "mp3_44100";
 
-const BASE_URL = "wss://conversation-api.up.railway.app";
-// const BASE_URL = "ws://localhost:3000";
+// const BASE_URL = "wss://conversation-api.up.railway.app";
+const BASE_URL = "ws://localhost:3000";
 const URL = `${BASE_URL}?output_format=${output_format}`;
 
 const SAMPLE_RATE = 44100;
