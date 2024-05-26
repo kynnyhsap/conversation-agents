@@ -7,6 +7,9 @@
     "sim": "bun run ./src/simulate.ts",
     "input-device": "ffmpeg -f avfoundation -list_devices true -i ''"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@deepgram/sdk": "^3.2.0",
     "groq-sdk": "^0.3.3",
