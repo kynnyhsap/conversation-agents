@@ -17,9 +17,6 @@ export function createDeepgramConnection() {
     encoding: "linear16",
 
     smart_format: true,
-    utterance_end_ms: 1000,
-    interim_results: true,
-    diarize: true,
     profanity_filter: false,
   };
 
@@ -47,10 +44,10 @@ export function createDeepgramConnection() {
       console.error("[DEEPGRAM 🎥] error.", e);
     });
 
-    // setInterval(() => {
-    //   ws.send(JSON.stringify({ type: "KeepAlive" }));
-    //   console.log("[DEEPGRAM 🎥] sending keep alive");
-    // }, 3000);
+    setInterval(() => {
+      ws.send(JSON.stringify({ type: "KeepAlive" }));
+      // console.log("[DEEPGRAM 🎥] sending keep alive");
+    }, 3000);
   });
 
   return ws;

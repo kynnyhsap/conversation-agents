@@ -1,5 +1,6 @@
 import { spawn } from "bun";
 import { parseArgs } from "util";
+import { listedForKeyHold } from "./stdin";
 
 const output_format = "mp3_44100";
 
@@ -12,7 +13,8 @@ const { values: args } = parseArgs({
   args: Bun.argv,
   allowPositionals: true,
   options: {
-    index: { type: "string" }, // audio device index
+    // audio device index
+    index: { type: "string" },
   },
 });
 
@@ -23,7 +25,6 @@ const AUDIO_DEVICE_INDEX = Number(args.index) ?? 0;
 const command = `ffmpeg -f avfoundation -i :${AUDIO_DEVICE_INDEX} -ac ${CHANNELS} -ar ${SAMPLE_RATE} -f wav -`;
 const ffmpeg = spawn(command.split(" "), { stderr: "ignore" });
 const recordingStream = ffmpeg.stdout;
-// const recordingStream = Bun.file("experiments/input-audio-2.pcm").stream();
 
 const ws = new WebSocket(URL);
 
@@ -33,23 +34,49 @@ ws.addEventListener("open", async (event) => {
   // @ts-ignore
   for await (const chunk of recordingStream) {
     // console.log("[Simulated WS] Sending chunk...", chunk.length);
-    ws.send(chunk);
+
+    if (listening) {
+      ws.send(chunk);
+    }
   }
 });
 
-// useful options:
-// --audio-device=coreaudio/BuiltInSpeakerDevice
-
-const mpv = spawn(`mpv -`.split(" "), {
-  stdin: "pipe",
-  // stderr: "ignore", // run quietly
+let listening = false;
+const keyHoldEmitter = listedForKeyHold();
+keyHoldEmitter.addListener("start", () => {
+  ws.send(JSON.stringify({ type: "start" }));
+  console.log("[STARTED]");
+  listening = true;
 });
+keyHoldEmitter.addListener("stop", () => {
+  ws.send(JSON.stringify({ type: "stop" }));
+  console.log("[STOPPED]");
+  listening = false;
+});
+keyHoldEmitter.addListener("exit", () => {
+  console.log("[EXITED]");
+  process.exit();
+});
+// e.addListener("hold", () => Bun.write(stdin, "."));
+
+const mpv = spawn(`mpv -`.split(" "), { stdin: "pipe", stdout: "ignore" });
+
+const outputAudioBuffers: Uint8Array[] = [];
 
 ws.addEventListener("message", async (event) => {
   const buf = event.data as Uint8Array;
 
-  // console.log("message", event);
+  outputAudioBuffers.push(buf);
 
-  mpv.stdin.write(buf);
-  mpv.stdin.flush();
+  if (!listening) {
+    while (outputAudioBuffers.length > 0) {
+      const buf = outputAudioBuffers.shift();
+
+      if (buf) {
+        mpv.stdin.write(buf);
+        mpv.stdin.flush();
+        Bun.sleep(100);
+      }
+    }
+  }
 });

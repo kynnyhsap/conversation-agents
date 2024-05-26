@@ -1,3 +1,4 @@
+import { isJSON } from "./utils.js";
 import { createDeepgramConnection } from "./deepgram.js";
 import { ttsStream } from "./elevenlabs.js";
 import { chat } from "./openai.js";
@@ -27,6 +28,8 @@ wss.on("connection", (ws, req) => {
 
   const currentTranscripts = [];
 
+  let transcribing = false;
+
   deepgram.addEventListener("message", async (messageEvent) => {
     const data = JSON.parse(messageEvent.data);
 
@@ -34,57 +37,66 @@ wss.on("connection", (ws, req) => {
 
     if (data.type === "Results") {
       const transcript = data.channel.alternatives[0].transcript;
-
-      if (!transcript) {
-        return; // we don't care about empty transcripts
-      }
-
-      if (!data.is_final) {
-        return; // we don't care about non-final results
-      }
-
+      if (!transcript) return;
+      console.log("[DEEPGRAM 🎥] T:", transcript);
       currentTranscripts.push(transcript);
-    }
-
-    if (data.type === "UtteranceEnd") {
-      const prompt = currentTranscripts.join(" ");
-      currentTranscripts.length = 0; // clear the array
-
-      if (!prompt) {
-        return;
-      }
-
-      console.log("[DEEPGRAM 🎥] T:", prompt);
-
-      console.time("llm ttfb");
-      const message = await chat(prompt, chatHistory);
-      chatHistory.push({ prompt, message });
-      console.timeEnd("llm ttfb");
-
-      console.log("[LLM 🤖] R:", message.content);
-
-      let firstChunkLoaded = false;
-      console.time("tts ttfg");
-      const speechStream = await ttsStream(message.content, output_format);
-      for await (const chunk of speechStream) {
-        if (!firstChunkLoaded) {
-          firstChunkLoaded = true;
-          console.timeEnd("tts ttfg");
-        }
-
-        ws.send(chunk);
-      }
     }
   });
 
-  ws.on("message", (message) => {
-    inputAudioChunks.push(message);
+  ws.on("message", async (message) => {
+    if (isJSON(message.toString())) {
+      const event = JSON.parse(message.toString());
 
-    if (!isDeepgramOpen()) {
-      return;
+      if (event.type === "start") {
+        transcribing = true;
+        return;
+      }
+
+      if (event.type === "stop") {
+        transcribing = false;
+
+        const prompt = currentTranscripts.join(" ");
+        currentTranscripts.length = 0; // clear the array
+
+        if (!prompt) {
+          return;
+        }
+
+        console.log("[PROPMPT]:", prompt);
+
+        console.time("llm");
+        const message = await chat(prompt, chatHistory);
+        chatHistory.push({ prompt, message });
+        console.timeEnd("llm");
+
+        console.log("[RESPONSE]:", message.content);
+
+        let firstChunkLoaded = false;
+        console.time("tts");
+        const speechStream = await ttsStream(message.content, output_format);
+        for await (const chunk of speechStream) {
+          if (!firstChunkLoaded) {
+            firstChunkLoaded = true;
+            console.timeEnd("tts");
+          }
+
+          ws.send(chunk);
+        }
+
+        return;
+      }
     }
 
-    deepgram.send(message);
+    if (transcribing) {
+      // process.stdout.write("🎤");
+      inputAudioChunks.push(message);
+
+      if (!isDeepgramOpen()) {
+        return;
+      }
+
+      deepgram.send(message);
+    }
   });
 
   ws.on("close", () => {
