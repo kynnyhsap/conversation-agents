@@ -3,7 +3,7 @@ import { parseArgs } from "util";
 import { listedForKeyHold } from "./stdin";
 
 const output_format = "mp3_44100";
-const language = "en-US";
+const language = "en";
 // const language = "uk";
 
 // const BASE_URL = "wss://conversation-api.up.railway.app";

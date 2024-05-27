@@ -8,7 +8,7 @@ export function createDeepgramConnection({ language }) {
   const params = {
     model: "nova-2",
 
-    language: language ?? "en-US",
+    language: language ?? "en",
 
     // NOTE: audio recorded with web browser is conteinerized, hence we shoudn't specify encoding, sample_rate and channels
 
