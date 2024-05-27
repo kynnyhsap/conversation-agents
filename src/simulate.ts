@@ -3,10 +3,12 @@ import { parseArgs } from "util";
 import { listedForKeyHold } from "./stdin";
 
 const output_format = "mp3_44100";
+const language = "en-US";
+// const language = "uk";
 
 // const BASE_URL = "wss://conversation-api.up.railway.app";
 const BASE_URL = "ws://localhost:3000";
-const URL = `${BASE_URL}?output_format=${output_format}`;
+const URL = `${BASE_URL}?output_format=${output_format}&language=${language}`;
 
 const SAMPLE_RATE = 44100;
 const CHANNELS = 2;
@@ -59,7 +61,7 @@ keyHoldEmitter.addListener("exit", () => {
   console.log("[EXITED]");
   process.exit();
 });
-// e.addListener("hold", () => Bun.write(stdin, "."));
+keyHoldEmitter.addListener("hold", () => process.stdout.write("."));
 
 const mpv = spawn(`mpv -`.split(" "), {
   stdin: "pipe",

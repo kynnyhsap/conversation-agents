@@ -4,12 +4,11 @@ const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY;
 
 const DEEPGRAM_API_URL = "https://api.deepgram.com/v1";
 
-export function createDeepgramConnection() {
+export function createDeepgramConnection({ language }) {
   const params = {
     model: "nova-2",
 
-    // language: "uk",
-    language: "en-US",
+    language: language ?? "en-US",
 
     // NOTE: audio recorded with web browser is conteinerized, hence we shoudn't specify encoding, sample_rate and channels
 

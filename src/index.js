@@ -8,6 +8,7 @@ import fs from "fs";
 import url from "url";
 
 import { WebSocketServer } from "ws";
+import { getRandomFiller } from "./fillers.js";
 
 const chatHistory = [];
 const deepgramMessages = [];
@@ -17,13 +18,16 @@ const outputAudioChunks = [];
 const wss = new WebSocketServer({ port: Number(process.env.PORT ?? 3000) });
 
 wss.on("connection", (ws, req) => {
-  const { output_format } = url.parse(req.url, true).query;
+  const { query } = url.parse(req.url, true);
 
-  console.log("[WSS] Client connected to server.", { output_format });
+  const output_format = query.output_format ?? "pcm_16000";
+  const language = query.language ?? "en-US";
+
+  console.log("[WSS] Client connected to server.", { output_format, language });
 
   const startTimestamp = Date.now();
 
-  const deepgram = createDeepgramConnection();
+  const deepgram = createDeepgramConnection({ language });
   const isDeepgramOpen = () => deepgram.readyState === WebSocket.OPEN;
 
   const currentTranscripts = [];
@@ -62,6 +66,11 @@ wss.on("connection", (ws, req) => {
           return;
         }
 
+        // TODO: add filler text to chat history
+        const { fillerPath } = getRandomFiller(language, output_format);
+        const fillerStream = fs.createReadStream(fillerPath);
+        fillerStream.on("data", (chunk) => ws.send(chunk));
+
         console.log("[PROPMPT]:", prompt);
 
         console.time("llm");
@@ -73,8 +82,8 @@ wss.on("connection", (ws, req) => {
 
         let firstChunkLoaded = false;
         console.time("tts");
-        const speechStream = await ttsStream(message.content, output_format);
-        for await (const chunk of speechStream) {
+        const ttsResponse = await ttsStream(message.content, output_format);
+        for await (const chunk of ttsResponse.body) {
           if (!firstChunkLoaded) {
             firstChunkLoaded = true;
             console.timeEnd("tts");

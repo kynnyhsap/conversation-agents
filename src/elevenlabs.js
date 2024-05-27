@@ -34,5 +34,33 @@ export async function ttsStream(
     throw new Error("Response body is null");
   }
 
-  return response.body;
+  return response;
+}
+
+export async function tts(
+  text,
+  output_format = "pcm_16000",
+  voiceId = DEFAULT_VOICE_ID,
+) {
+  const params = {
+    output_format,
+  };
+
+  const response = await fetch(
+    `${ELEVEN_LABS_API_URI}/text-to-speech/${voiceId}?${qs.stringify(params)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Xi-Api-Key": ELEVEN_LABS_API_KEY,
+      },
+      body: JSON.stringify({ model_id, text }),
+    },
+  );
+
+  if (!response.body) {
+    throw new Error("Response body is null");
+  }
+
+  return response;
 }
