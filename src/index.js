@@ -21,7 +21,7 @@ wss.on("connection", (ws, req) => {
   const { query } = url.parse(req.url, true);
 
   const output_format = query.output_format ?? "pcm_16000";
-  const language = query.language ?? "en-US";
+  const language = query.language ?? "en";
 
   console.log("[WSS] Client connected to server.", { output_format, language });
 
@@ -66,10 +66,10 @@ wss.on("connection", (ws, req) => {
           return;
         }
 
-        // TODO: add filler text to chat history
-        const { fillerPath } = getRandomFiller(language, output_format);
-        const fillerStream = fs.createReadStream(fillerPath);
-        fillerStream.on("data", (chunk) => ws.send(chunk));
+        // // TODO: add filler text to chat history
+        // const { fillerPath } = getRandomFiller(language, output_format);
+        // const fillerStream = fs.createReadStream(fillerPath);
+        // fillerStream.on("data", (chunk) => ws.send(chunk));
 
         console.log("[PROPMPT]:", prompt);
 
