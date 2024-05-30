@@ -74,8 +74,3 @@ export async function chatStream(text, chatHistory) {
     ],
   });
 }
-
-// export type ChatHisotryItem = {
-//   prompt: string;
-//   message: OpenAI.ChatCompletionMessage;
-// };

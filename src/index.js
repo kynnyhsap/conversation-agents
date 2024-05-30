@@ -7,13 +7,16 @@ import prettyms from "pretty-ms";
 import fs from "fs";
 import url from "url";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 import { WebSocketServer } from "ws";
-import { getRandomFiller } from "./fillers.js";
 
 const chatHistory = [];
 const deepgramMessages = [];
 const inputAudioChunks = [];
 const outputAudioChunks = [];
+
+const SILENCE_CHUNK = Buffer.alloc(44100 * 3 * 2); // size = sampleRate * durationInSeconds * bytesPerSample
 
 const wss = new WebSocketServer({ port: Number(process.env.PORT ?? 3000) });
 
@@ -34,8 +37,46 @@ wss.on("connection", (ws, req) => {
 
   let transcribing = false;
 
+  async function onStart() {
+    transcribing = true;
+  }
+
+  async function onStop() {
+    transcribing = false;
+
+    deepgram.send(SILENCE_CHUNK); // send silence chunk to force the finish of transcription
+    await sleep(500); // sleep for some time to allow deepgram send us the last chunk
+
+    const prompt = currentTranscripts.join(" ").trim();
+    currentTranscripts.length = 0; // clear the array
+
+    if (!prompt) return;
+
+    console.log("[LLM prompt]:", prompt);
+
+    console.time("[LLM latency]");
+    const message = await chat(prompt, chatHistory);
+    chatHistory.push({ prompt, message });
+    console.timeEnd("[LLM latency]");
+
+    console.log("[LLM response]:", message.content);
+
+    let firstChunkLoaded = false;
+    console.time("[TTS latency]");
+    const ttsResponse = await ttsStream(message.content, output_format);
+    for await (const chunk of ttsResponse.body) {
+      if (!firstChunkLoaded) {
+        firstChunkLoaded = true;
+        console.timeEnd("[TTS latency]");
+      }
+
+      ws.send(chunk);
+    }
+  }
+
   deepgram.addEventListener("message", async (messageEvent) => {
     const data = JSON.parse(messageEvent.data);
+    // console.log("[DEEPGRAM] Message received.", data);
 
     deepgramMessages.push(data);
 
@@ -49,49 +90,15 @@ wss.on("connection", (ws, req) => {
 
   ws.on("message", async (message) => {
     if (isJSON(message.toString())) {
-      const event = JSON.parse(message.toString());
+      const { type } = JSON.parse(message.toString());
 
-      if (event.type === "start") {
-        transcribing = true;
+      if (type === "start") {
+        await onStart();
         return;
       }
 
-      if (event.type === "stop") {
-        transcribing = false;
-
-        const prompt = currentTranscripts.join(" ");
-        currentTranscripts.length = 0; // clear the array
-
-        if (!prompt) {
-          return;
-        }
-
-        // // TODO: add filler text to chat history
-        // const { fillerPath } = getRandomFiller(language, output_format);
-        // const fillerStream = fs.createReadStream(fillerPath);
-        // fillerStream.on("data", (chunk) => ws.send(chunk));
-
-        console.log("[PROPMPT]:", prompt);
-
-        console.time("llm");
-        const message = await chat(prompt, chatHistory);
-        chatHistory.push({ prompt, message });
-        console.timeEnd("llm");
-
-        console.log("[RESPONSE]:", message.content);
-
-        let firstChunkLoaded = false;
-        console.time("tts");
-        const ttsResponse = await ttsStream(message.content, output_format);
-        for await (const chunk of ttsResponse.body) {
-          if (!firstChunkLoaded) {
-            firstChunkLoaded = true;
-            console.timeEnd("tts");
-          }
-
-          ws.send(chunk);
-        }
-
+      if (type === "stop") {
+        await onStop();
         return;
       }
     }
@@ -100,9 +107,7 @@ wss.on("connection", (ws, req) => {
       // process.stdout.write("🎤");
       inputAudioChunks.push(message);
 
-      if (!isDeepgramOpen()) {
-        return;
-      }
+      if (!isDeepgramOpen()) return;
 
       deepgram.send(message);
     }
